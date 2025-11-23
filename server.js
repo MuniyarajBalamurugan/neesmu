@@ -55,6 +55,9 @@ async function createTables() {
 // Call table creation on server start
 createTables();
 
+app.get("/sample",(req,res)=>{
+    res.json({status:"success"})
+});
 // API: Save user and order
 app.post('/api/saveOrder', async (req, res) => {
   const { name, email, phone, order_item, quantity, amount } = req.body;
