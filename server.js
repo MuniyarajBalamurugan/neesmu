@@ -79,30 +79,19 @@ app.post("/movies", async (req, res) => {
     res.status(500).json({ status: "error", message: "Failed to add movie" });
   }
 });
-app.post("/movies", async (req, res) => {
+app.get("/movies", async (req, res) => {
   try {
-    const { screen_no, movie_no, imdb_no, start_date, end_date, trailer_url } = req.body;
-
-    const query = `
-      INSERT INTO movies (screen_no, movie_no, imdb_no, start_date, end_date, trailer_url)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *;
-    `;
-
-    const values = [screen_no, movie_no, imdb_no, start_date, end_date, trailer_url];
-
-    const result = await pool.query(query, values);
-
+    const result = await pool.query("SELECT * FROM movies ORDER BY id DESC;");
     res.json({
       status: "success",
-      movie: result.rows[0]
+      movies: result.rows
     });
-
   } catch (error) {
-    console.error("Error adding movie:", error);
-    res.status(500).json({ status: "error", message: "Failed to add movie" });
+    console.error("Error fetching movies:", error);
+    res.status(500).json({ status: "error", message: "Failed to fetch movies" });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
