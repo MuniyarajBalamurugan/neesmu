@@ -7,6 +7,8 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
+app.use(express.static("public"));
+
 
 // PostgreSQL connection
 const pool = new Pool({
