@@ -27,27 +27,6 @@ const razorpay = new Razorpay({
 async function createTables() {
   try {
 
-    // USERS TABLE
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100),
-        email VARCHAR(100) UNIQUE,
-        phone VARCHAR(20)
-      );
-    `);
-
-    // ORDERS TABLE
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id),
-        order_item VARCHAR(100),
-        quantity INT,
-        amount INT,
-        status VARCHAR(20)
-      );
-    `);
 
     // MOVIES TABLE
     await pool.query(`
@@ -73,6 +52,7 @@ async function createTables() {
 createTables();
 
 app.get("/sample", (req, res) => {
+
   res.json({ status: "success" });
 });
 
