@@ -76,7 +76,7 @@ async function createTables() {
     await pool.query(`
       INSERT INTO movies (screen_no, movie_name, poster_url, trailer_url)
       VALUES
-      (1, 'Movie One', 'poster1.jpg', 'trailer1'),
+      (1, 'Mask', 'poster1.jpg', 'trailer1'),
       (2, 'Movie Two', 'poster2.jpg', 'trailer2');
     `);
 
