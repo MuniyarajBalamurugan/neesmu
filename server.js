@@ -30,16 +30,7 @@ async function createTables() {
 
     // MOVIES TABLE
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS movies (
-        id SERIAL PRIMARY KEY,
-        screen_no INTEGER NOT NULL,
-        movie_no VARCHAR(50),
-        imdb_no VARCHAR(50),
-        start_date DATE,
-        end_date DATE,
-        trailer_url TEXT
-      );
-    `);
+     TRUNCATE table movies `);
 
     console.log("Tables created or already exist.");
 
@@ -54,42 +45,6 @@ createTables();
 app.get("/sample", (req, res) => {
 
   res.json({ status: "success" });
-});
-app.post("/movies", async (req, res) => {
-  try {
-    const { screen_no, movie_no, imdb_no, start_date, end_date, trailer_url } = req.body;
-
-    const query = `
-      INSERT INTO movies (screen_no, movie_no, imdb_no, start_date, end_date, trailer_url)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *;
-    `;
-
-    const values = [screen_no, movie_no, imdb_no, start_date, end_date, trailer_url];
-
-    const result = await pool.query(query, values);
-
-    res.json({
-      status: "success",
-      movie: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error("Error adding movie:", error);
-    res.status(500).json({ status: "error", message: "Failed to add movie" });
-  }
-});
-app.get("/movies", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM movies ORDER BY id DESC;");
-    res.json({
-      status: "success",
-      movies: result.rows
-    });
-  } catch (error) {
-    console.error("Error fetching movies:", error);
-    res.status(500).json({ status: "error", message: "Failed to fetch movies" });
-  }
 });
 
 
