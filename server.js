@@ -26,6 +26,8 @@ const razorpay = new Razorpay({
 // Function to create tables if they don't exist
 async function createTables() {
   try {
+
+    // USERS TABLE
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -35,6 +37,7 @@ async function createTables() {
       );
     `);
 
+    // ORDERS TABLE
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY,
@@ -46,52 +49,32 @@ async function createTables() {
       );
     `);
 
+    // MOVIES TABLE
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS movies (
+        id SERIAL PRIMARY KEY,
+        screen_no INTEGER NOT NULL,
+        movie_no VARCHAR(50),
+        imdb_no VARCHAR(50),
+        start_date DATE,
+        end_date DATE,
+        trailer_url TEXT
+      );
+    `);
+
     console.log("Tables created or already exist.");
+
   } catch (err) {
     console.error("Error creating tables:", err);
   }
 }
 
-// Call table creation on server start
+// Run table creation on server start
 createTables();
 
-app.get("/sample",(req,res)=>{
-    res.json({status:"success"})
-});
-// API: Save user and order
-app.post('/api/saveOrder', async (req, res) => {
-  const { name, email, phone, order_item, quantity, amount } = req.body;
-  try {
-    // 1️⃣ Insert or get user
-    let user = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
-    let userId;
-    if(user.rows.length === 0){
-      const newUser = await pool.query(
-        'INSERT INTO users(name,email,phone) VALUES($1,$2,$3) RETURNING id',
-        [name,email,phone]
-      );
-      userId = newUser.rows[0].id;
-    } else userId = user.rows[0].id;
-
-    // 2️⃣ Insert order
-    const newOrder = await pool.query(
-      'INSERT INTO orders(user_id, order_item, quantity, amount, status) VALUES($1,$2,$3,$4,$5) RETURNING id',
-      [userId, order_item, quantity, amount, 'pending']
-    );
-
-    // 3️⃣ Create Razorpay order
-    const razorpayOrder = await razorpay.orders.create({
-      amount: amount,
-      currency: "INR",
-      receipt: `order_rcptid_${newOrder.rows[0].id}`
-    });
-
-    res.json({ status: 'success', orderId: razorpayOrder.id, dbOrderId: newOrder.rows[0].id });
-  } catch(err){
-    console.error(err);
-    res.json({ status: 'error', message: err.message });
-  }
+app.get("/sample", (req, res) => {
+  res.json({ status: "success" });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
