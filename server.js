@@ -74,26 +74,9 @@ async function createTables() {
     `);
 
     // ⚡ Insert fixed movies (ONLY once)
-    await pool.query(`TRUNCATE movies RESTART IDENTITY;`);
-    await pool.query(`
-      INSERT INTO movies (screen_no, movie_name, poster_url, trailer_url)
-      VALUES
-      (1, 'Mask', 'poster1.jpg', 'trailer1'),
-      (2, 'Movie Two', 'poster2.jpg', 'trailer2');
-    `);
+    
 
-    // ⚡ Insert showtimes (ONLY once)
-    await pool.query(`TRUNCATE showtimes RESTART IDENTITY;`);
-    await pool.query(`
-      INSERT INTO showtimes (time_slot)
-      VALUES 
-      ('10:00 AM'),
-      ('01:00 PM'),
-      ('04:00 PM'),
-      ('10:00 PM');
-    `);
-
-    console.log("Tables created + movies & showtimes inserted.");
+    console.log("Tables created.");
 
   } catch (err) {
     console.error("Error creating tables:", err);
