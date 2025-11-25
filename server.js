@@ -122,12 +122,15 @@ app.get("/movies", async (req, res) => {
 // ----------------------------
 app.get("/showtimes", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM showtimes");
+    const result = await pool.query(
+      "SELECT * FROM showtimes ORDER BY time_slot ASC"
+    );
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err });
   }
 });
+
 
 // ----------------------------
 // API: ADD MOVIE
