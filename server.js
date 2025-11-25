@@ -9,7 +9,6 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static("public"));
 
-
 // PostgreSQL connection
 const pool = new Pool({
   user: process.env.PGUSER,
@@ -60,7 +59,7 @@ async function createTables() {
       );
     `);
 
-    // BOOKINGS TABLE
+    // BOOKINGS TABLE (main booking)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS bookings (
         id SERIAL PRIMARY KEY,
@@ -68,15 +67,36 @@ async function createTables() {
         movie_id INT REFERENCES movies(id),
         date DATE NOT NULL,
         time_slot_id INT REFERENCES showtimes(id),
-        seat_no VARCHAR(10) NOT NULL,
+        total_amount INT,
+        payment_status VARCHAR(20) DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // ⚡ Insert fixed movies (ONLY once)
-    
+    // BOOKING SEATS TABLE (multiple seats for one booking)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS booking_seats (
+        id SERIAL PRIMARY KEY,
+        booking_id INT REFERENCES bookings(id),
+        seat_no VARCHAR(10) NOT NULL
+      );
+    `);
 
-    console.log("Tables created.");
+    // PAYMENTS TABLE (razorpay log)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id SERIAL PRIMARY KEY,
+        booking_id INT REFERENCES bookings(id),
+        razorpay_order_id VARCHAR(100),
+        razorpay_payment_id VARCHAR(100),
+        amount INT,
+        currency VARCHAR(10),
+        status VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    console.log("All tables created successfully!");
 
   } catch (err) {
     console.error("Error creating tables:", err);
@@ -110,40 +130,74 @@ app.get("/showtimes", async (req, res) => {
 });
 
 // ----------------------------
-// API: REGISTER USER
+// API: ADD MOVIE
 // ----------------------------
-app.post("/register", async (req, res) => {
-  const { name, email, phone } = req.body;
+app.post("/add-movie", async (req, res) => {
+  const { screen_no, movie_name, poster_url, trailer_url } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO users (name, email, phone)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [name, email, phone]
+      `INSERT INTO movies (screen_no, movie_name, poster_url, trailer_url)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [screen_no, movie_name, poster_url, trailer_url]
     );
-
-    res.json(result.rows[0]);
+    res.json({ status: "success", movie: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: err });
+    res.status(500).json({ error: "Failed to add movie" });
   }
 });
 
 // ----------------------------
-// API: BOOK SEAT
+// API: ADD SHOWTIME
 // ----------------------------
-app.post("/book", async (req, res) => {
-  const { user_id, movie_id, date, time_slot_id, seat_no } = req.body;
+app.post("/add-showtime", async (req, res) => {
+  const { time_slot } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO bookings (user_id, movie_id, date, time_slot_id, seat_no)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [user_id, movie_id, date, time_slot_id, seat_no]
+      `INSERT INTO showtimes (time_slot)
+       VALUES ($1)
+       RETURNING *`,
+      [time_slot]
+    );
+    res.json({ status: "success", showtime: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add showtime" });
+  }
+});
+
+// ----------------------------
+// API: BOOK TICKETS (MULTIPLE SEATS)
+// ----------------------------
+app.post("/book", async (req, res) => {
+  const { user_id, movie_id, date, time_slot_id, seats, total_amount } = req.body;
+
+  try {
+    // Create booking
+    const bookingResult = await pool.query(
+      `INSERT INTO bookings (user_id, movie_id, date, time_slot_id, total_amount)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [user_id, movie_id, date, time_slot_id, total_amount]
     );
 
-    res.json(result.rows[0]);
+    const booking = bookingResult.rows[0];
+    const booking_id = booking.id;
+
+    // Insert multiple seats
+    for (let seat of seats) {
+      await pool.query(
+        `INSERT INTO booking_seats (booking_id, seat_no)
+         VALUES ($1, $2)`,
+        [booking_id, seat]
+      );
+    }
+
+    res.json({ status: "success", booking_id });
+
   } catch (err) {
-    res.status(500).json({ error: err });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -163,8 +217,11 @@ app.post("/available-seats", async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT seat_no FROM bookings
-       WHERE movie_id=$1 AND date=$2 AND time_slot_id=$3`,
+      `SELECT seat_no FROM booking_seats 
+       WHERE booking_id IN (
+         SELECT id FROM bookings 
+         WHERE movie_id=$1 AND date=$2 AND time_slot_id=$3 AND payment_status='success'
+       )`,
       [movie_id, date, time_slot_id]
     );
 
@@ -173,12 +230,12 @@ app.post("/available-seats", async (req, res) => {
     const available = allSeats.filter(s => !bookedSeats.includes(s));
 
     res.json({ available });
+
   } catch (err) {
     res.status(500).json({ error: err });
   }
 });
 
-// Sample route
 app.get("/sample", (req, res) => {
   res.json({ status: "success" });
 });
