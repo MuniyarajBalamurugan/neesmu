@@ -143,9 +143,10 @@ app.post("/add-movie", async (req, res) => {
       [screen_no, movie_name, poster_url, trailer_url]
     );
     res.json({ status: "success", movie: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to add movie" });
-  }
+ } catch (err) {
+  console.error("MOVIE INSERT ERROR:", err);
+  res.status(500).json({ error: err.message });
+}
 });
 
 // ----------------------------
