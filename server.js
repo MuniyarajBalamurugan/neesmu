@@ -120,18 +120,43 @@ app.get("/movies", async (req, res) => {
 // ----------------------------
 // API: GET SHOWTIMES
 // ----------------------------
-app.get("/showtimes", async (req, res) => {
+app.post("/showtimes", async (req, res) => {
   try {
+    const { date } = req.body;
+
     const result = await pool.query(`
       SELECT *
       FROM showtimes
       ORDER BY to_timestamp(time_slot, 'HH12:MI AM') ASC
     `);
-    res.json(result.rows);
+
+    const times = result.rows;
+
+    // Get today's date (YYYY-MM-DD)
+    const today = new Date().toISOString().split("T")[0];
+
+    // If selected date is not today → return all
+    if (date !== today) {
+      return res.json(times);
+    }
+
+    // If selected date IS today → filter upcoming times only
+    const now = new Date();
+
+    // Convert each showtime to Date object for today
+    const upcoming = times.filter(slot => {
+      const showDate = new Date(`${today} ${slot.time_slot}`);
+      return showDate > now;
+    });
+
+    res.json(upcoming);
+
   } catch (err) {
-    res.status(500).json({ error: err });
+    console.error(err);
+    res.status(500).json({ error: "Cannot fetch showtimes" });
   }
 });
+
 
 
 
