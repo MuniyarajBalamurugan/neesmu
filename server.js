@@ -32,69 +32,70 @@ async function createTables() {
 
     // USERS TABLE
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100),
-        email VARCHAR(100) UNIQUE,
-        phone VARCHAR(20)
-      );
+      DROP TABLE IF EXISTS booking_seats CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS bookings CASCADE;
+DROP TABLE IF EXISTS showtimes CASCADE;
+DROP TABLE IF EXISTS movies CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
     `);
 
-    // MOVIES TABLE
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS movies (
-        id SERIAL PRIMARY KEY,
-        screen_no INTEGER NOT NULL,
-        movie_name VARCHAR(100) NOT NULL,
-        poster_url VARCHAR(255),
-        trailer_url VARCHAR(255)
-      );
-    `);
+    // // MOVIES TABLE
+    // await pool.query(`
+    //   CREATE TABLE IF NOT EXISTS movies (
+    //     id SERIAL PRIMARY KEY,
+    //     screen_no INTEGER NOT NULL,
+    //     movie_name VARCHAR(100) NOT NULL,
+    //     poster_url VARCHAR(255),
+    //     trailer_url VARCHAR(255)
+    //   );
+    // `);
 
-    // SHOWTIMES TABLE
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS showtimes (
-        id SERIAL PRIMARY KEY,
-        time_slot VARCHAR(20) NOT NULL
-      );
-    `);
+    // // SHOWTIMES TABLE
+    // await pool.query(`
+    //   CREATE TABLE IF NOT EXISTS showtimes (
+    //     id SERIAL PRIMARY KEY,
+    //     time_slot VARCHAR(20) NOT NULL
+    //   );
+    // `);
 
-    // BOOKINGS TABLE (main booking)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS bookings (
-        id SERIAL PRIMARY KEY,
-        user_id INT REFERENCES users(id),
-        movie_id INT REFERENCES movies(id),
-        date DATE NOT NULL,
-        time_slot_id INT REFERENCES showtimes(id),
-        total_amount INT,
-        payment_status VARCHAR(20) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+    // // BOOKINGS TABLE (main booking)
+    // await pool.query(`
+    //   CREATE TABLE IF NOT EXISTS bookings (
+    //     id SERIAL PRIMARY KEY,
+    //     user_id INT REFERENCES users(id),
+    //     movie_id INT REFERENCES movies(id),
+    //     date DATE NOT NULL,
+    //     time_slot_id INT REFERENCES showtimes(id),
+    //     total_amount INT,
+    //     payment_status VARCHAR(20) DEFAULT 'pending',
+    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    //   );
+    // `);
 
-    // BOOKING SEATS TABLE (multiple seats for one booking)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS booking_seats (
-        id SERIAL PRIMARY KEY,
-        booking_id INT REFERENCES bookings(id),
-        seat_no VARCHAR(10) NOT NULL
-      );
-    `);
+    // // BOOKING SEATS TABLE (multiple seats for one booking)
+    // await pool.query(`
+    //   CREATE TABLE IF NOT EXISTS booking_seats (
+    //     id SERIAL PRIMARY KEY,
+    //     booking_id INT REFERENCES bookings(id),
+    //     seat_no VARCHAR(10) NOT NULL
+    //   );
+    // `);
 
-    // PAYMENTS TABLE (razorpay log)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS payments (
-        id SERIAL PRIMARY KEY,
-        booking_id INT REFERENCES bookings(id),
-        razorpay_order_id VARCHAR(100),
-        razorpay_payment_id VARCHAR(100),
-        amount INT,
-        currency VARCHAR(10),
-        status VARCHAR(20),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+    // // PAYMENTS TABLE (razorpay log)
+    // await pool.query(`
+    //   CREATE TABLE IF NOT EXISTS payments (
+    //     id SERIAL PRIMARY KEY,
+    //     booking_id INT REFERENCES bookings(id),
+    //     razorpay_order_id VARCHAR(100),
+    //     razorpay_payment_id VARCHAR(100),
+    //     amount INT,
+    //     currency VARCHAR(10),
+    //     status VARCHAR(20),
+    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    //   );
+    // `);
 
     console.log("All tables created successfully!");
 
