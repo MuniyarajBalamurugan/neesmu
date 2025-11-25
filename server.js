@@ -122,14 +122,17 @@ app.get("/movies", async (req, res) => {
 // ----------------------------
 app.get("/showtimes", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM showtimes ORDER BY time_slot ASC"
-    );
+    const result = await pool.query(`
+      SELECT *
+      FROM showtimes
+      ORDER BY to_timestamp(time_slot, 'HH12:MI AM') ASC
+    `);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err });
   }
 });
+
 
 
 // ----------------------------
