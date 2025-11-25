@@ -124,7 +124,7 @@ app.post("/showtimes", async (req, res) => {
   try {
     const { date, current_time } = req.body;
 
-    // Fetch all showtimes sorted
+    // Fetch sorted showtimes
     const result = await pool.query(`
       SELECT *
       FROM showtimes
@@ -136,20 +136,20 @@ app.post("/showtimes", async (req, res) => {
     // Today's date
     const today = new Date().toISOString().split("T")[0];
 
-    // If date is not today → return all slots
+    // If the user selected a future date → return all times
     if (date !== today) {
       return res.json(times);
     }
 
-    // CASE: user selected TODAY
-    // Convert user current time to Date
+    // Case: today selected
     const now = new Date(`${today} ${current_time}`);
 
     const upcoming = times.filter(slot => {
       const showStart = new Date(`${today} ${slot.time_slot}`);
-      const showEnd = new Date(showStart.getTime() + 2 * 60 * 60 * 1000); // +2 hrs
 
-      // Condition: user_time <= show_start + 2 hours
+      // +2 hours 15 minutes
+      const showEnd = new Date(showStart.getTime() + (2 * 60 + 15) * 60 * 1000);
+
       return now <= showEnd;
     });
 
@@ -160,6 +160,7 @@ app.post("/showtimes", async (req, res) => {
     res.status(500).json({ error: "Cannot fetch showtimes" });
   }
 });
+
 
 
 
